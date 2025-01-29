@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerenciador de Dívidas</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+    }
+    header {
+      background-color: #4caf50;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+    .container {
+      max-width: 800px;
+      margin: 1rem auto;
+      padding: 1rem;
+      background: white;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+      color: #333;
+    }
+    form {
+      margin-bottom: 1rem;
+    }
+    form input, form select, form button {
+      width: 100%;
+      padding: 0.8rem;
+      margin: 0.5rem 0;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    table th, table td {
+      padding: 0.8rem;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    .total {
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    button.delete-btn {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button.delete-btn:hover {
+      background-color: #c0392b;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Gerenciador de Dívidas</h1>
+  </header>
+  <div class="container">
+    <h2>Adicionar Transação</h2>
+    <form id="transaction-form">
+      <input type="text" id="name" placeholder="Nome da pessoa" required>
+      <input type="number" id="amount" placeholder="Valor (R$)" required>
+      <select id="type" required>
+        <option value="" disabled selected>Selecione o tipo</option>
+        <option value="owed">Eu devo</option>
+        <option value="lent">Devem para mim</option>
+      </select>
+      <button type="submit">Adicionar</button>
+    </form>
+
+    <h2>Eu devo</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Valor</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="owed-list"></tbody>
+    </table>
+    <p class="total">Total: <span id="total-owed">R$ 0,00</span></p>
+
+    <h2>Devem para mim</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Valor</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="lent-list"></tbody>
+    </table>
+    <p class="total">Total: <span id="total-lent">R$ 0,00</span></p>
+  </div>
+
+  <script>
+    const form = document.getElementById("transaction-form");
+    const owedList = document.getElementById("owed-list");
+    const lentList = document.getElementById("lent-list");
+    const totalOwed = document.getElementById("total-owed");
+    const totalLent = document.getElementById("total-lent");
+    
+    function formatCurrency(value) {
+      return new Intl.NumberFormat("pt-BR", {
+        style: "currency",
+        currency: "BRL"
+      }).format(value);
+    }
+    
+    function updateTotals() {
+      let sumOwed = 0;
+      let sumLent = 0;
+      
+      document.querySelectorAll("#owed-list tr").forEach(row => {
+        sumOwed += parseFloat(row.dataset.amount);
+      });
+      
+      document.querySelectorAll("#lent-list tr").forEach(row => {
+        sumLent += parseFloat(row.dataset.amount);
+      });
+      
+      totalOwed.textContent = formatCurrency(sumOwed);
+      totalLent.textContent = formatCurrency(sumLent);
+    }
+    
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const name = document.getElementById("name").value;
+      const amount = parseFloat(document.getElementById("amount").value);
+      const type = document.getElementById("type").value;
+      
+      if (!name || !amount || !type) {
+        alert("Por favor, preencha todos os campos!");
+        return;
+      }
+      
+      const row = document.createElement("tr");
+      row.dataset.amount = amount;
+      row.innerHTML = `
+        <td>${name}</td>
+        <td>${formatCurrency(amount)}</td>
+        <td><button class="delete-btn">Excluir</button></td>
+      `;
+      
+      row.querySelector(".delete-btn").addEventListener("click", () => {
+        row.remove();
+        updateTotals();
+      });
+      
+      if (type === "owed") {
+        owedList.appendChild(row);
+      } else {
+        lentList.appendChild(row);
+      }
+      
+      updateTotals();
+      form.reset();
+    });
+  </script>
+</body>
+</html>
