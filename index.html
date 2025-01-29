@@ -116,6 +116,33 @@
     const totalOwed = document.getElementById("total-owed");
     const totalLent = document.getElementById("total-lent");
     
+    // Carregar dados do localStorage
+    function loadData() {
+      const owedData = JSON.parse(localStorage.getItem("owed")) || [];
+      const lentData = JSON.parse(localStorage.getItem("lent")) || [];
+      
+      owedData.forEach(item => addTransaction(item, "owed"));
+      lentData.forEach(item => addTransaction(item, "lent"));
+      
+      updateTotals();
+    }
+
+    // Salvar dados no localStorage
+    function saveData() {
+      const owedData = [];
+      const lentData = [];
+      
+      document.querySelectorAll("#owed-list tr").forEach(row => {
+        owedData.push({ name: row.cells[0].textContent, amount: parseFloat(row.dataset.amount) });
+      });
+      document.querySelectorAll("#lent-list tr").forEach(row => {
+        lentData.push({ name: row.cells[0].textContent, amount: parseFloat(row.dataset.amount) });
+      });
+
+      localStorage.setItem("owed", JSON.stringify(owedData));
+      localStorage.setItem("lent", JSON.stringify(lentData));
+    }
+    
     function formatCurrency(value) {
       return new Intl.NumberFormat("pt-BR", {
         style: "currency",
@@ -138,6 +165,28 @@
       totalOwed.textContent = formatCurrency(sumOwed);
       totalLent.textContent = formatCurrency(sumLent);
     }
+
+    function addTransaction(item, type) {
+      const row = document.createElement("tr");
+      row.dataset.amount = item.amount;
+      row.innerHTML = `
+        <td>${item.name}</td>
+        <td>${formatCurrency(item.amount)}</td>
+        <td><button class="delete-btn">Excluir</button></td>
+      `;
+      
+      row.querySelector(".delete-btn").addEventListener("click", () => {
+        row.remove();
+        saveData();
+        updateTotals();
+      });
+      
+      if (type === "owed") {
+        owedList.appendChild(row);
+      } else {
+        lentList.appendChild(row);
+      }
+    }
     
     form.addEventListener("submit", (e) => {
       e.preventDefault();
@@ -150,28 +199,16 @@
         return;
       }
       
-      const row = document.createElement("tr");
-      row.dataset.amount = amount;
-      row.innerHTML = `
-        <td>${name}</td>
-        <td>${formatCurrency(amount)}</td>
-        <td><button class="delete-btn">Excluir</button></td>
-      `;
-      
-      row.querySelector(".delete-btn").addEventListener("click", () => {
-        row.remove();
-        updateTotals();
-      });
-      
-      if (type === "owed") {
-        owedList.appendChild(row);
-      } else {
-        lentList.appendChild(row);
-      }
-      
+      const item = { name, amount };
+      addTransaction(item, type);
+      saveData();
       updateTotals();
       form.reset();
     });
+
+    // Carregar os dados do localStorage ao iniciar
+    loadData();
   </script>
 </body>
 </html>
+
